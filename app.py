@@ -6,9 +6,10 @@ from sqlalchemy.orm import Session
 from sqlalchemy import create_engine, func
 
 from flask import Flask, jsonify
+import datetime as dt
 
 engine = create_engine("sqlite:///Resources/hawaii.sqlite")
-conn = engine.connect()
+
 Base = automap_base()
 Base.prepare(engine, reflect=True)
 # Save references to each table
@@ -25,9 +26,9 @@ def home():
     return (
         f"Welcome to the Hawaii Weather API!<br/>"
         f"Available Routes:<br/>"
-        f"/api/v1.0/precipitation"
-        f"/api/v1.0/stations"
-        f"/api/v1.0/temperatures"
+        f"/api/v1.0/precipitation<br/>"
+        f"/api/v1.0/stations<br/>"
+        f"/api/v1.0/temperatures<br/>"
         
     )
 
@@ -38,36 +39,36 @@ def precipitation():
     session = Session(engine)
  
     # Query results to a dictionary using `date` as the key and `prcp` as the value.
+    date = dt.datetime(2016, 8, 23)
     results = session.query(Measurement.prcp, Measurement.date).filter(Measurement.date > date).order_by(Measurement.date).all()
 
     session.close()
 
-    # Create a dictionary from the row data and append to a list of all_passengers
+    # Create a dictionary 
     precip_results = []
-    for date, precip in results:
+    for prcp, date in results:
         precip_dict = {}
-        precip_dict["date"] = date
         precip_dict["precip"] = prcp
+        precip_dict["date"] = date
         
         precip_results.append(precip_dict)
 
     return jsonify(precip_results)
 
-# 5. Define what to do when a user hits the /about route
+
 @app.route("/api/v1.0/stations")
 def stations():
     session = Session(engine)
+    station_resulst = session.query(Station.name).distinct().all()
+    session.close()
+    return jsonify(station_resulst)
     
-# 6. Define what to do when a user hits the /about route
+
 @app.route("/api/v1.0/temperatures")
 def temperatures():
     session = Session(engine)
     
-# @app.route("/jsonified")
-# def jsonified():
-#     return jsonify(hello_dict)
 
-    
     
 if __name__ == "__main__":
     app.run(debug=True)
