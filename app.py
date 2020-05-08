@@ -29,11 +29,12 @@ def home():
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/temperatures<br/>"
-        
+        f"/api/v1.0/start<br/>"
+        f"/api/v1.0/start/end<br/>"
     )
 
 # 4. Define what to do when a user hits the /about route
-@app.route("/api/v1.0/precipitation")
+@app.route("/api/v1.0/precipitation/")
 def precipitation():
 
     session = Session(engine)
@@ -44,7 +45,7 @@ def precipitation():
 
     session.close()
 
-    # Create a dictionary 
+    # Create a list of dictionaries
     precip_results = []
     for prcp, date in results:
         precip_dict = {}
@@ -67,8 +68,46 @@ def stations():
 @app.route("/api/v1.0/temperatures")
 def temperatures():
     session = Session(engine)
+    date = dt.datetime(2016, 8, 23)
+    temp_results = session.query(Measurement.tobs, Measurement.date).\
+    filter(Measurement.station == "USC00519281").\
+    filter(Measurement.date > date).\
+    order_by(Measurement.date).all()
+    session.close()
     
+    # Create a list of dictionaries
+    temp_results_list = []
+    for tobs, date in temp_results:
+        temp_dict = {}
+        temp_dict["temps"] = tobs
+        temp_dict["date"] = date
+        
+        temp_results_list.append(temp_dict)
+    return jsonify(temp_results_list)
 
-    
+@app.route("/api/v1.0/<start>")
+def start_date(start):
+    session = Session(engine)
+    #we want... start = '2016-05-21'
+    sel = [func.avg(Measurement.tobs), 
+       func.min(Measurement.tobs), 
+       func.max(Measurement.tobs)] 
+   
+#     canonicalized_date = "'" + start + "'"
+#     for result in measurement:
+#         search_term = result["start"]
+
+   
+    temp_averages = session.query(*sel).filter(Measurement.date >= start).all()
+    session.close()
+    return jsonify(temp_averages)
+
+@app.route("/api/v1.0/<start>/<end>")
+def start_and_end_date(start, end):
+    session = Session(engine)
+#  When given the start and the end date, calculate the `TMIN`, `TAVG`, and `TMAX` for dates between the start and end date inclusive.   
+    session.close()
+    return jsonify()
+
 if __name__ == "__main__":
     app.run(debug=True)
