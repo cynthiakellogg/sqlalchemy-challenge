@@ -24,13 +24,14 @@ app = Flask(__name__)
 @app.route("/")
 def home():
     return (
+
         f"Welcome to the Hawaii Weather API!<br/>"
         f"Available Routes:<br/>"
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/temperatures<br/>"
         f"/api/v1.0/start<br/>"
-        f"/api/v1.0/start/end<br/>"
+        f"/api/v1.0/start/end"
     )
 
 # 4. Define what to do when a user hits the /about route
@@ -88,26 +89,30 @@ def temperatures():
 @app.route("/api/v1.0/<start>")
 def start_date(start):
     session = Session(engine)
-    #we want... start = '2016-05-21'
+    
     sel = [func.avg(Measurement.tobs), 
        func.min(Measurement.tobs), 
        func.max(Measurement.tobs)] 
    
-#     canonicalized_date = "'" + start + "'"
-#     for result in measurement:
-#         search_term = result["start"]
-
-   
     temp_averages = session.query(*sel).filter(Measurement.date >= start).all()
     session.close()
-    return jsonify(temp_averages)
+    
+    
+    return jsonify(f"Here is the average temperature: {temp_averages[0][0]}, minimum temperature: {temp_averages[0][1]}, and maximum temperature: {temp_averages[0][2]} from {start} to 2017-08-23.")
 
 @app.route("/api/v1.0/<start>/<end>")
 def start_and_end_date(start, end):
     session = Session(engine)
-#  When given the start and the end date, calculate the `TMIN`, `TAVG`, and `TMAX` for dates between the start and end date inclusive.   
+    sel = [func.avg(Measurement.tobs), 
+       func.min(Measurement.tobs), 
+       func.max(Measurement.tobs)] 
+   
+    temp_averages = session.query(*sel).\
+        filter(Measurement.date >= start).\
+        filter(Measurement.date <= end).all()
     session.close()
-    return jsonify()
+    
+    return jsonify(f"Here is the average temperature: {temp_averages[0][0]}, minimum temperature: {temp_averages[0][1]}, and maximum temperature: {temp_averages[0][2]} from {start} to {end}.")
 
 if __name__ == "__main__":
     app.run(debug=True)
